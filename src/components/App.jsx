@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { useEffect, useState } from 'react';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
 import { fetch } from '../services/imgApi';
@@ -19,137 +19,107 @@ Notify.init({
   clickToClose: true,
 });
 
-export class App extends Component {
-  state = {
-    query: null,
-    gallery: false,
-    pictures: [],
-    page: 1,
-    pages: null,
-    loader: false,
-    modal: false,
-    large: null,
-    alt: null,
-  };
+export const App = () => {
+  const [query, setQuery] = useState(null);
+  const [gallery, setGallery] = useState(false);
+  const [pictures, setPictures] = useState([]);
+  const [page, setPage] = useState(null);
+  const [pages, setPages] = useState(null);
+  const [loader, setLoader] = useState(false);
+  const [modal, setModal] = useState(false);
+  const [large, setLarge] = useState(null);
+  const [alt, setAlt] = useState(null);
 
-  componentDidUpdate(_, prevState) {
-    const { query, page } = this.state;
-
-    if (prevState.page !== page || prevState.query !== query) {
-      this.setState({
-        loader: true,
-      });
-
-      fetch(query, page)
-        .then(({ pictures, pages }) => {
-          if (pictures.length === 0) {
-            Notify.warning('Oppps.. bad query');
-            this.setState({
-              gallery: false,
-            });
-            return;
-          }
-
-          this.setState({
-            pictures: [...prevState.pictures, ...pictures],
-            pages,
-            gallery: true,
-          });
-        })
-        .catch(error => Notify.warning('Oppps.. bad query'))
-        .finally(
-          this.setState({
-            loader: false,
-          })
-        );
-    }
-  }
-
-  onSubmit = event => {
-    event.preventDefault();
-
-    const query = event.target.elements.input.value;
-
-    if (query.trim() === '') {
-      Notify.warning('Oppps.. please type query');
+  useEffect(() => {
+    if (!page) {
       return;
     }
 
-    this.setState(prevState => {
-      const pictures = prevState.pictures;
-      pictures.length = 0;
+    fetch(query, page)
+      .then(({ pictures, pages }) => {
+        if (pictures.length === 0) {
+          Notify.warning('Oppps.. bad query');
+          setGallery(false);
+          return;
+        }
+        setPictures(prevState => [...prevState, ...pictures]);
+        setPages(pages);
+        setGallery(true);
+      })
+      .catch(error => Notify.warning('Oppps.. bad query'))
+      .finally(setLoader(false));
+  }, [query, page]);
 
-      return {
-        pictures,
-        query,
-        page: 1,
-      };
-    });
+  const onSubmit = event => {
+    event.preventDefault();
+
+    const newQuery = event.target.elements.input.value;
+
+    if (newQuery.trim() === '') {
+      Notify.warning('Oppps.. please type query');
+      event.target.reset();
+      setGallery(false);
+      return;
+    }
+
+    setPictures([]);
+    setQuery(newQuery);
+    setPage(1);
+    setLoader(true);
+
+    event.target.reset();
   };
 
-  onClick = () => {
-    this.setState(prevState => {
-      const page = prevState.page + 1;
-      return { page };
-    });
+  const onClick = () => {
+    setPage(prevState => prevState + 1);
+    setLoader(true);
   };
 
-  onClickModal = (large, alt) => {
-    window.addEventListener('keydown', this.closeByEsc);
+  const onClickModal = (newLarge, newAlt) => {
+    window.addEventListener('keydown', closeByEsc);
 
-    this.setState({
-      large,
-      modal: true,
-      alt,
-    });
+    setLarge(newLarge);
+    setModal(true);
+    setAlt(newAlt);
   };
 
-  closeByEsc = ({ code }) => {
+  const closeByEsc = ({ code }) => {
     if (code === 'Escape') {
-      this.setState({
-        modal: false,
-      });
+      setModal(false);
 
-      window.removeEventListener('keydown', this.closeByEsc);
+      window.removeEventListener('keydown', closeByEsc);
     }
   };
 
-  modalClose = event => {
+  const modalClose = event => {
     if (event.target !== event.currentTarget) {
       return;
     }
-    this.setState({
-      modal: false,
-    });
+    setModal(false);
   };
 
-  render() {
-    const { onSubmit, onClick, onClickModal, modalClose } = this;
-    const { gallery, pictures, page, pages, loader, modal, large, alt } =
-      this.state;
-    return (
-      <>
-        <Searchbar onSubmit={onSubmit} />
-        {gallery && (
-          <ImageGallery>
-            {pictures.map(({ id, small, large, alt }) => {
-              return (
-                <ImageGalleryItem
-                  onClickModal={onClickModal}
-                  id={id}
-                  small={small}
-                  large={large}
-                  alt={alt}
-                  key={id}
-                />
-              );
-            })}
-          </ImageGallery>
-        )}
-        {loader && <Loader />}
-        {gallery && page < pages && <Button onClick={onClick} />}
-        {modal && <Modal alt={alt} large={large} modalClose={modalClose} />}
-      </>
-    );
-  }
-}
+  return (
+    <>
+      <Searchbar onSubmit={onSubmit} />
+      {gallery && (
+        <ImageGallery>
+          {pictures.map(({ id, small, large, alt }) => {
+            return (
+              <ImageGalleryItem
+                onClickModal={onClickModal}
+                id={id}
+                small={small}
+                large={large}
+                alt={alt}
+                key={id}
+              />
+            );
+          })}
+        </ImageGallery>
+      )}
+      {loader && <Loader />}
+      {gallery && page < pages && <Button onClick={onClick} />}
+      {modal && <Modal alt={alt} large={large} modalClose={modalClose} />}
+    </>
+  );
+};
