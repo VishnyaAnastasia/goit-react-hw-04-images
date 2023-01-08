@@ -15,7 +15,7 @@ const Modal = ({ large, alt, setModal }) => {
     return () => {
       window.removeEventListener('keydown', closeByEsc);
     };
-  }, []);
+  }, [setModal]);
 
   const modalClose = event => {
     if (event.target !== event.currentTarget) {
