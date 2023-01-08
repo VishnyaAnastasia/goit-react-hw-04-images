@@ -4,18 +4,18 @@ import styles from './Modal.module.css';
 import PropTypes from 'prop-types';
 
 const Modal = ({ large, alt, setModal }) => {
-  useEffect(() => {
-    window.addEventListener('keydown', closeByEsc);
-    return () => {
-      window.removeEventListener('keydown', closeByEsc);
-    };
-  }, []);
-
   const closeByEsc = ({ code }) => {
     if (code === 'Escape') {
       setModal(false);
     }
   };
+
+  useEffect(() => {
+    window.addEventListener('keydown', closeByEsc);
+    return () => {
+      window.removeEventListener('keydown', closeByEsc);
+    };
+  }, [closeByEsc]);
 
   const modalClose = event => {
     if (event.target !== event.currentTarget) {
