@@ -34,6 +34,7 @@ export const App = () => {
     if (!page) {
       return;
     }
+    setLoader(true);
 
     fetch(query, page)
       .then(({ pictures, pages }) => {
@@ -50,57 +51,25 @@ export const App = () => {
       .finally(setLoader(false));
   }, [query, page]);
 
-  const onSubmit = event => {
-    event.preventDefault();
-
-    const newQuery = event.target.elements.input.value;
-
-    if (newQuery.trim() === '') {
-      Notify.warning('Oppps.. please type query');
-      event.target.reset();
-      setGallery(false);
-      return;
-    }
-
+  const onSubmit = newQuery => {
     setPictures([]);
     setQuery(newQuery);
     setPage(1);
-    setLoader(true);
-
-    event.target.reset();
   };
 
   const onClick = () => {
     setPage(prevState => prevState + 1);
-    setLoader(true);
   };
 
   const onClickModal = (newLarge, newAlt) => {
-    window.addEventListener('keydown', closeByEsc);
-
     setLarge(newLarge);
     setModal(true);
     setAlt(newAlt);
   };
 
-  const closeByEsc = ({ code }) => {
-    if (code === 'Escape') {
-      setModal(false);
-
-      window.removeEventListener('keydown', closeByEsc);
-    }
-  };
-
-  const modalClose = event => {
-    if (event.target !== event.currentTarget) {
-      return;
-    }
-    setModal(false);
-  };
-
   return (
     <>
-      <Searchbar onSubmit={onSubmit} />
+      <Searchbar onSubmit={onSubmit} setGallery={setGallery} />
       {gallery && (
         <ImageGallery>
           {pictures.map(({ id, small, large, alt }) => {
@@ -119,7 +88,7 @@ export const App = () => {
       )}
       {loader && <Loader />}
       {gallery && page < pages && <Button onClick={onClick} />}
-      {modal && <Modal alt={alt} large={large} modalClose={modalClose} />}
+      {modal && <Modal alt={alt} large={large} setModal={setModal} />}
     </>
   );
 };

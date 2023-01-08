@@ -1,8 +1,29 @@
+import { useEffect } from 'react';
 import styles from './Modal.module.css';
 
 import PropTypes from 'prop-types';
 
-const Modal = ({ large, alt, modalClose }) => {
+const Modal = ({ large, alt, setModal }) => {
+  useEffect(() => {
+    window.addEventListener('keydown', closeByEsc);
+    return () => {
+      window.removeEventListener('keydown', closeByEsc);
+    };
+  }, []);
+
+  const closeByEsc = ({ code }) => {
+    if (code === 'Escape') {
+      setModal(false);
+    }
+  };
+
+  const modalClose = event => {
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+    setModal(false);
+  };
+
   return (
     <div className={styles.overlay} onClick={modalClose}>
       <div className={styles.modal}>
@@ -15,6 +36,6 @@ const Modal = ({ large, alt, modalClose }) => {
 Modal.propTypes = {
   large: PropTypes.string.isRequired,
   alt: PropTypes.string.isRequired,
-  modalClose: PropTypes.func.isRequired,
+  setModal: PropTypes.func.isRequired,
 };
 export default Modal;
